@@ -1,0 +1,13 @@
+# Core (needed everywhere)
+numpy
+matplotlib
+scikit-learn
+Pillow
+Flask
+joblib
+gunicorn   # production WSGI server, used for deployment (see Procfile)
+
+# Needed for the real MNIST pipeline (src/train.py, src/evaluate.py, src/predict.py)
+# Install these on Google Colab, or locally if you have Python 3.10+ and want
+# to train on your own machine.
+tensorflow>=2.15

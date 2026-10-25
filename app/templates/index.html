@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digit Recognizer</title>
+<style>
+  :root {
+    --bg: #0E1A26;
+    --panel: #162A3D;
+    --panel-border: #24405A;
+    --navy: #1F4E78;
+    --amber: #E0983A;
+    --text: #EAF1F7;
+    --text-dim: #8FA6BA;
+    --good: #4FD19A;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #142838 0%, var(--bg) 55%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .wrap { width: 100%; max-width: 860px; }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 {
+    margin: 0 0 6px;
+    font-size: 1.7rem;
+    letter-spacing: 0.3px;
+  }
+  header h1 span { color: var(--amber); }
+  header p { margin: 0; color: var(--text-dim); font-size: 0.92rem; }
+  .badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(79, 209, 154, 0.12);
+    border: 1px solid rgba(79, 209, 154, 0.4);
+    color: var(--good);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 22px;
+  }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .panel h2 {
+    margin: 0 0 14px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+  #canvas {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border-radius: 10px;
+    border: 2px solid var(--panel-border);
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+  button {
+    flex: 1;
+    border: none;
+    border-radius: 9px;
+    padding: 11px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  button:active { transform: scale(0.97); }
+  .btn-primary { background: var(--amber); color: #241503; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--panel-border); }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+
+  .result-hero { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+  .result-digit {
+    width: 92px; height: 92px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, var(--navy), #142e46);
+    border: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; font-weight: 700; color: var(--amber);
+    flex-shrink: 0;
+  }
+  .result-meta .conf { font-size: 1.6rem; font-weight: 700; }
+  .result-meta .label { color: var(--text-dim); font-size: 0.82rem; margin-top: 2px; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .bar-row .digit-label { width: 16px; font-size: 0.82rem; color: var(--text-dim); text-align: right; }
+  .bar-track { flex: 1; height: 14px; background: #0E1E2D; border-radius: 7px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--amber)); width: 0%; transition: width 0.35s ease; }
+  .bar-row .pct { width: 46px; font-size: 0.76rem; color: var(--text-dim); text-align: right; }
+  .bar-row.top .digit-label { color: var(--amber); font-weight: 700; }
+
+  .placeholder { color: var(--text-dim); font-size: 0.88rem; text-align: center; padding: 30px 0; }
+  footer { text-align: center; margin-top: 22px; color: var(--text-dim); font-size: 0.76rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Handwritten Digit <span>Recognizer</span></h1>
+    <p>Draw a single digit (0–9) in the box, then hit Predict.</p>
+    <div class="badge" id="backend-badge">model: {{ backend }}</div>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Draw here</h2>
+      <canvas id="canvas" width="280" height="280"></canvas>
+      <div class="btn-row">
+        <button class="btn-secondary" id="clear-btn">Clear</button>
+        <button class="btn-primary" id="predict-btn">Predict</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Prediction</h2>
+      <div id="result-area">
+        <div class="placeholder">Draw a digit and press Predict to see the result here.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Implementation of a Machine Learning-Based Handwritten Digit Recognition System</footer>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let hasDrawn = false;
+
+function resetCanvas() {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#FFFFFF';
+  hasDrawn = false;
+}
+resetCanvas();
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+function start(e) {
+  drawing = true; hasDrawn = true;
+  const p = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  e.preventDefault();
+}
+function move(e) {
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  e.preventDefault();
+}
+function end() { drawing = false; }
+
+canvas.addEventListener('mousedown', start);
+canvas.addEventListener('mousemove', move);
+window.addEventListener('mouseup', end);
+canvas.addEventListener('touchstart', start);
+canvas.addEventListener('touchmove', move);
+window.addEventListener('touchend', end);
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  resetCanvas();
+  document.getElementById('result-area').innerHTML =
+    '<div class="placeholder">Draw a digit and press Predict to see the result here.</div>';
+});
+
+document.getElementById('predict-btn').addEventListener('click', async () => {
+  if (!hasDrawn) return;
+  const dataUrl = canvas.toDataURL('image/png');
+  const resultArea = document.getElementById('result-area');
+  resultArea.innerHTML = '<div class="placeholder">Predicting…</div>';
+
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl }),
+    });
+    const data = await res.json();
+    if (data.error) { resultArea.innerHTML = '<div class="placeholder">' + data.error + '</div>'; return; }
+    renderResult(data);
+  } catch (err) {
+    resultArea.innerHTML = '<div class="placeholder">Could not reach the server: ' + err + '</div>';
+  }
+});
+
+function renderResult(data) {
+  const { prediction, probabilities } = data;
+  const maxP = Math.max(...probabilities);
+
+  let bars = '';
+  for (let d = 0; d < 10; d++) {
+    const pct = (probabilities[d] * 100).toFixed(1);
+    const isTop = d === prediction;
+    bars += `
+      <div class="bar-row ${isTop ? 'top' : ''}">
+        <div class="digit-label">${d}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="pct">${pct}%</div>
+      </div>`;
+  }
+
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-hero">
+      <div class="result-digit">${prediction}</div>
+      <div class="result-meta">
+        <div class="conf">${(maxP * 100).toFixed(1)}% confident</div>
+        <div class="label">Predicted digit</div>
+      </div>
+    </div>
+    ${bars}
+  `;
+}
+</script>
+</body>
+</html>
