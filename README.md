@@ -152,6 +152,8 @@ convention.
 
 ## Deploying on GitHub Pages (free, recommended)
 
+The website is already in the `docs/` folder (a copy of `webapp_static/`), so just set Settings -> Pages -> Source: Deploy from a branch -> `main` / `/docs` -> Save.
+
 `webapp_static/` is a complete static website. Create a free GitHub account, make a
 new public repository, upload the files **inside** `webapp_static/` (Add file →
 Upload files), then Settings → Pages → Deploy from a branch → `main` / `(root)` →

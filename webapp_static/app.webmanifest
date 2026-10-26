@@ -1,7 +1,7 @@
 {
   "name": "Handwritten Digit Recognizer",
   "short_name": "Digit Recognizer",
-  "description": "Draw a digit 0-9 and a CNN trained on real MNIST (99.05% test accuracy) recognizes it, fully offline.",
+  "description": "Draw a digit 0-9 and a CNN trained on real MNIST (99.41% test accuracy) recognizes it, fully offline.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
