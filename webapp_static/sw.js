@@ -1,25 +1,14 @@
-// Network-first: when online you always get the latest files (so fixes reach installed
-// copies of the app); every successful load refreshes the cache, which is what serves
-// the app when you're offline.
-const CACHE = 'digit-recognizer-v3';
-const ASSETS = ['./', 'index.html', 'app.webmanifest', 'manifest.json', 'weights_b64.json',
-  'samples.json', 'samples_b64.json', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
+// Network-first: online visitors always get the newest files; the cache only serves offline use.
+const CACHE = 'digit-recognizer-v4';
+const ASSETS = ['./', 'index.html', 'style.css', 'engine.js', 'ui.js', 'model-data.js', 'app.webmanifest', 'icon-192.png', 'icon-512.png'];
+self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request).then(res => {
-      if (res.ok && new URL(e.request.url).origin === location.origin) {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-      }
-      return res;
-    }).catch(() => caches.match(e.request, {ignoreSearch: true}))
-  );
+  e.respondWith(fetch(e.request).then(res => {
+    if (res.ok && new URL(e.request.url).origin === location.origin) { const c = res.clone(); caches.open(CACHE).then(x => x.put(e.request, c)); }
+    return res;
+  }).catch(() => caches.match(e.request, { ignoreSearch: true })));
 });

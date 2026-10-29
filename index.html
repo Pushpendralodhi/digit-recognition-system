@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Handwritten Digit Recognition — CNN trained on MNIST</title>
+<meta name="description" content="Draw a digit 0–9 and a convolutional neural network trained on MNIST recognises it instantly, entirely in your browser.">
+<meta name="theme-color" content="#0b1620">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Digit Recognizer">
+<link rel="manifest" href="app.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<noscript>This site needs JavaScript to recognise digits.</noscript>
+
+<nav><div class="wrap">
+  <a class="brand" href="#top"><i>7</i> Digit Recognizer</a>
+  <div class="links">
+    <a href="#demo">Demo</a><a href="#how">How it works</a><a href="#results">Results</a><a href="#project">Project</a>
+    <a class="gh" href="https://github.com/Pushpendralodhi/digit-recognition-system" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+  <p class="eyebrow">Machine learning · MNIST · CNN</p>
+  <h1>Handwritten digit <span>recognition</span></h1>
+  <p class="sub">Draw a number with your mouse, touchpad or finger. A neural network trained on 60,000 real handwritten digits reads it back in a few milliseconds — all inside your browser, nothing is uploaded.</p>
+  <div class="cta">
+    <a class="btn primary" href="#demo">Try it now</a>
+    <a class="btn ghost" href="https://github.com/Pushpendralodhi/digit-recognition-system" target="_blank" rel="noopener">View the code</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>99.41%</b><span>accuracy on 10,000 unseen MNIST test images</span></div>
+    <div class="stat"><b>253,000</b><span>training images, incl. mouse-style drawings</span></div>
+    <div class="stat"><b>225,034</b><span>trainable parameters in the CNN</span></div>
+    <div class="stat"><b>~10 ms</b><span>per prediction, on your device</span></div>
+  </div>
+</div></header>
+
+<section id="demo"><div class="wrap">
+  <p class="eyebrow">Live demo</p>
+  <h2 class="sec-title">Draw a digit</h2>
+  <p class="sec-lead">Write one digit, 0 to 9, large and in the middle of the board. The result appears when you lift the pen, or press Predict.</p>
+  <div class="demo-grid">
+    <div class="panel">
+      <div class="status" id="status-badge"><span class="dot"></span><span id="status-text">Loading model…</span></div>
+      <canvas id="canvas" width="280" height="280" tabindex="0" aria-label="Drawing board: draw a digit here"></canvas>
+      <p class="sample-note" id="sample-note">&nbsp;</p>
+      <div class="row">
+        <button class="btn ghost" id="clear-btn" type="button">Clear</button>
+        <button class="btn primary" id="predict-btn" type="button" disabled>Predict</button>
+      </div>
+      <button class="btn ghost" id="sample-btn" type="button" style="width:100%;margin-top:10px" disabled>Try a real MNIST test digit</button>
+      <label class="auto"><input type="checkbox" id="auto-predict" checked> Predict automatically when I lift the pen</label>
+      <p class="tips"><b>Tips:</b> one digit at a time · fill most of the board · any stroke thickness works — the page thins your lines to a single pen width before the network sees them.</p>
+    </div>
+    <div class="panel">
+      <h3>Prediction</h3>
+      <div id="result-area"></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <p class="eyebrow">How it works</p>
+  <h2 class="sec-title">From pen strokes to a prediction</h2>
+  <p class="sec-lead">A drawing on a canvas looks nothing like a clean MNIST image, so the page converts it first. The same recipe was used to build the training data.</p>
+  <ol class="steps">
+    <li><h3>Draw</h3><p>Your strokes land on a 280×280 canvas with an 18-pixel brush.</p></li>
+    <li><h3>Thin</h3><p>Strokes are thinned to a 1-pixel centre line and redrawn with one fixed pen, so thick or thin writing looks the same.</p></li>
+    <li><h3>Normalise</h3><p>The digit is cropped, scaled to 20 px, and centred by centre of mass in a 28×28 image, exactly like MNIST.</p></li>
+    <li><h3>Classify</h3><p>A CNN outputs ten probabilities. The biggest one is the answer.</p></li>
+  </ol>
+  <div class="two">
+    <div class="panel">
+      <h3>CNN architecture</h3>
+      <ul class="arch">
+        <li>Input <span>28 × 28 × 1</span></li>
+        <li>Conv2D 32, 3×3, ReLU <span>+ MaxPool 2×2</span></li>
+        <li>Conv2D 64, 3×3, ReLU <span>+ MaxPool 2×2</span></li>
+        <li>Flatten → Dense 128, ReLU <span>Dropout 0.3 (training)</span></li>
+        <li>Dense 10, softmax <span>225,034 parameters</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>The Python web app (same model)</h3>
+      <div class="shots"><img src="assets/app_empty_state.png" alt="Flask app, empty drawing board" loading="lazy"><img src="assets/app_prediction_result.png" alt="Flask app showing a prediction" loading="lazy"></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="results" style="background:var(--bg2);border-block:1px solid var(--line)"><div class="wrap">
+  <p class="eyebrow">Results</p>
+  <h2 class="sec-title">How accurate is it?</h2>
+  <p class="sec-lead">Measured on the 10,000 MNIST test images the models never saw during training, plus drawings that mimic mouse input.</p>
+  <div class="two">
+    <div class="panel">
+      <h3>ANN vs CNN on MNIST test set</h3>
+      <div class="cmp">
+        <div class="r"><span>ANN</span><div class="t"><div class="f" style="width:97.93%;background:#4a86b8"></div></div><span class="v">97.93%</span></div>
+        <div class="r"><span>CNN</span><div class="t"><div class="f" style="width:99.41%;background:var(--amber)"></div></div><span class="v">99.41%</span></div>
+      </div>
+      <p class="sec-lead" style="margin:16px 0 0;font-size:.84rem">The CNN learns strokes and curves directly from the pixels, which is why it beats the dense-layer ANN.</p>
+    </div>
+    <div class="panel tbl-wrap">
+      <h3>Drawn-digit robustness (CNN)</h3>
+      <table>
+        <tr><th>Test</th><th>Plain resize</th><th>Pen pipeline</th></tr>
+        <tr><td>Stroke fonts never trained on</td><td>57.1%</td><td class="good">100%</td></tr>
+        <tr><td>Simulated mouse drawings</td><td>73.4%</td><td class="good">99.9%</td></tr>
+        <tr><td>Typeset (filled) digits</td><td>23.5%</td><td class="good">92.4%</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="charts">
+    <figure class="chart"><img src="assets/cnn_confusion_matrix.png" alt="CNN confusion matrix" loading="lazy"><figcaption>CNN confusion matrix — almost everything sits on the diagonal.</figcaption></figure>
+    <figure class="chart"><img src="assets/ann_confusion_matrix.png" alt="ANN confusion matrix" loading="lazy"><figcaption>ANN confusion matrix.</figcaption></figure>
+    <figure class="chart"><img src="assets/cnn_accuracy.png" alt="CNN training accuracy curve" loading="lazy"><figcaption>CNN accuracy while training.</figcaption></figure>
+    <figure class="chart"><img src="assets/cnn_loss.png" alt="CNN training loss curve" loading="lazy"><figcaption>CNN loss while training.</figcaption></figure>
+  </div>
+  <p class="honest"><b>Honest limits:</b> the drawn-digit tests use synthetic drawings (fonts and a stroke generator), not hundreds of real people. Very unusual handwriting or decorative fonts can still be misread — if it gets one wrong, draw it again a little larger and clearer.</p>
+</div></section>
+
+<section id="project"><div class="wrap">
+  <p class="eyebrow">About the project</p>
+  <h2 class="sec-title">Implementation of a Machine Learning-Based Handwritten Digit Recognition System</h2>
+  <p class="sec-lead">Cornerstone project, School of Information Technology, Madhav Institute of Technology &amp; Science, Gwalior.</p>
+  <div class="two">
+    <div class="panel">
+      <h3>Milestones</h3>
+      <ul class="ms">
+        <li><b>M1</b><span>Project research and requirement analysis</span></li>
+        <li><b>M2</b><span>Data collection and preprocessing</span></li>
+        <li><b>M3</b><span>Model development and training (ANN, CNN)</span></li>
+        <li><b>M4</b><span>Model evaluation and testing</span></li>
+        <li><b>M5</b><span>Application development and deployment — this site</span></li>
+      </ul>
+    </div>
+    <div class="panel team">
+      <h3>Team</h3>
+      <p><b>Pushpendra Lodhi</b> <small>BTIT24O1108</small></p>
+      <p><b>Prabhanshu Katra</b> <small>BTIT24O1095</small></p>
+      <p style="margin-top:14px"><small>Guide</small><br><b>Prof. Neha Bhardwaj</b></p>
+      <p style="margin-top:14px"><a href="https://github.com/Pushpendralodhi/digit-recognition-system" target="_blank" rel="noopener">Source code on GitHub →</a></p>
+    </div>
+  </div>
+</div></section>
+
+<footer>Handwritten Digit Recognition · MITS Gwalior · The model runs fully in your browser; your drawing never leaves your device.</footer>
+
+<script src="model-data.js"></script>
+<script src="engine.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
